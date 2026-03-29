@@ -77,7 +77,7 @@ def get_artists_by_name(name: str, page: int = 1, limit: int = 21, db: Session =
     query = select(Artist)
 
     if name:
-        query = query.where(Artist.name.like(f"%{name}%"))
+        query = query.where(Artist.name.ilike(f"%{name}%"))
 
     artists = db.scalars(query
                          .order_by(Artist.name.asc())
@@ -87,7 +87,7 @@ def get_artists_by_name(name: str, page: int = 1, limit: int = 21, db: Session =
 
     query_total = select(func.count()).select_from(Artist)
     if name:
-        query_total = query_total.where(Artist.name.like(f"%{name}%"))
+        query_total = query_total.where(Artist.name.ilike(f"%{name}%"))
     total = db.scalar(query_total)
 
     return {
@@ -107,7 +107,7 @@ def get_artist_music_by_name(name: str, artist_id: int, page: int = 1, limit: in
     query = select(Music).where(Music.artists.any(Artist.id == artist_id))
 
     if name:
-        query = query.where(Music.name.like(f"%{name}%"))
+        query = query.where(Music.name.ilike(f"%{name}%"))
 
     music = db.scalars(query
                        .options(selectinload(Music.artists))
@@ -118,7 +118,7 @@ def get_artist_music_by_name(name: str, artist_id: int, page: int = 1, limit: in
 
     query_total = select(func.count()).select_from(Music).where(Music.artists.any(Artist.id == artist_id))
     if name:
-        query_total = query_total.where(Music.name.like(f"%{name}%"))
+        query_total = query_total.where(Music.name.ilike(f"%{name}%"))
     total = db.scalar(query_total)
 
     return {

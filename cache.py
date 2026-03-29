@@ -43,7 +43,7 @@ class DateSynchronizer:
     def get_artist_avatar(self, artist_name):
         artist_avatar_file = next(
             (f for f in _safe_listdir(self.artists_avatars_directory) if
-             f.is_file() and f.suffix.lower() in ALLOWED_PHOTO_SUFFIX and f.name == artist_name), None
+             f.is_file() and f.suffix.lower() in ALLOWED_PHOTO_SUFFIX and f.stem == artist_name), None
         )
         artist_avatar_url = None
         if artist_avatar_file:

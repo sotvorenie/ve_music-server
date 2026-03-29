@@ -59,7 +59,7 @@ def get_music_in_genre_by_name(name: str,
     query = select(Music).where(Music.genre_id == genre_id)
 
     if name:
-        query = query.where(Music.name.like(f"%{name}%"))
+        query = query.where(Music.name.ilike(f"%{name}%"))
 
     music = db.scalars(query
                        .options(selectinload(Music.artists))
@@ -70,7 +70,7 @@ def get_music_in_genre_by_name(name: str,
 
     total_query = select(func.count()).select_from(Music).where(Music.genre_id == genre_id)
     if name:
-        total_query = total_query.where(Music.name.like(f"%{name}%"))
+        total_query = total_query.where(Music.name.ilike(f"%{name}%"))
 
     total = db.scalar(total_query)
 

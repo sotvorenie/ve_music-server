@@ -38,7 +38,7 @@ def get_all_music(page: int = 1, limit: int = 21, db: Session = Depends(get_db))
     }
 
 
-@router.get("/{music_id}", response_model=MusicResponse)
+@router.get("/{music_id:int}", response_model=MusicResponse)
 @db_transaction
 def get_music(music_id: int, db: Session = Depends(get_db)):
     music = db.execute(select(Music)
@@ -75,7 +75,7 @@ def get_music_by_name(name: str, page: int = 1, limit: int = 21, db: Session = D
     query = select(Music)
 
     if name:
-        query = query.where(Music.name.like(f"%{name}%"))
+        query = query.where(Music.name.ilike(f"%{name}%"))
 
     music = db.scalars(query
                        .options(selectinload(Music.artists))
@@ -86,7 +86,7 @@ def get_music_by_name(name: str, page: int = 1, limit: int = 21, db: Session = D
 
     total_query = select(func.count()).select_from(Music)
     if name:
-        total_query = total_query.where(Music.name.like(f"%{name}%"))
+        total_query = total_query.where(Music.name.ilike(f"%{name}%"))
 
     total = db.scalar(total_query)
 
