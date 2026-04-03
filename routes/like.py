@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/like", tags=["Like"])
 
 
-@router.post("/{music_id}", response_model=LikeResponse)
+@router.post("/{music_id:int}", response_model=LikeResponse)
 @db_transaction
 def like_music(music_id: int, current_user: User = Depends(get_user), db: Session = Depends(get_db)):
     music = db.get(Music, music_id)
@@ -41,7 +41,7 @@ def like_music(music_id: int, current_user: User = Depends(get_user), db: Sessio
     }
 
 
-@router.post("/is_liked/{music_id}", response_model=IsLikedResponse)
+@router.get("/is_liked/{music_id:int}", response_model=IsLikedResponse)
 @db_transaction
 def is_like(music_id: int, current_user: User = Depends(get_user), db: Session = Depends(get_db)):
     is_liked = db.scalar(select(exists().where(and_(Like.music_id == music_id, Like.user_id == current_user.id))))

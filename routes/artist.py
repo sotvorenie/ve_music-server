@@ -38,7 +38,7 @@ def get_all_artists(page: int = 1, limit: int = 21, db: Session = Depends(get_db
     }
 
 
-@router.get("/{artist_id}", response_model=MusicListResponse)
+@router.get("/{artist_id:int}", response_model=MusicListResponse)
 @db_transaction
 def get_artist_music(artist_id: int, page: int = 1, limit: int = 21, db: Session = Depends(get_db)):
     skip = get_offset(page, limit)
