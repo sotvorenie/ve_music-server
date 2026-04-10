@@ -24,17 +24,19 @@ def get_all_genres(db: Session = Depends(get_db)):
     }
 
 
-@router.get("/{genre_id}", response_model=MusicListResponse)
+@router.get("/{genre_id:int}", response_model=MusicListResponse)
 @db_transaction
 def get_genres_music(genre_id: int, page: int = 1, limit: int = 21, db: Session = Depends(get_db)):
     skip = get_offset(page, limit)
 
-    music = db.execute(select(Music)
-                       .where(Music.genre_id == genre_id)
-                       .order_by(Music.name.asc())
-                       .offset(skip)
-                       .limit(limit)
-                       ).all()
+    music = db.scalars(
+        select(Music)
+        .where(Music.genre_id == genre_id)
+        .options(selectinload(Music.artists))
+        .order_by(Music.name.asc())
+        .offset(skip)
+        .limit(limit)
+    ).all()
 
     total = db.scalar(select(func.count()).select_from(Music).where(Music.genre_id == genre_id))
 
@@ -47,7 +49,7 @@ def get_genres_music(genre_id: int, page: int = 1, limit: int = 21, db: Session 
     }
 
 
-@router.get("/search_music", response_model=GenresListResponse)
+@router.get("/search_music", response_model=MusicListResponse)
 @db_transaction
 def get_music_in_genre_by_name(name: str,
                                genre_id: int,
