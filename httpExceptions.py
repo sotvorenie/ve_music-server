@@ -9,7 +9,7 @@ jwt_exception = HTTPException(
 
 registration_exception = HTTPException(
     status_code=400,
-    detail="Пользователь с таким именем уже существует",
+    detail="Пользователь с таким логином уже существует",
 )
 
 auth_exception = HTTPException(

@@ -18,7 +18,7 @@ router = APIRouter(prefix="/auth", tags=["Authorization"])
 @router.post("/register", response_model=MeResponse)
 @db_transaction
 def register(user_data: UserRegister, db: Session = Depends(get_db)):
-    existing_user = db.execute(select(User).where(User.name == user_data.name)).scalar_one_or_none()
+    existing_user = db.execute(select(User).where(User.login == user_data.login)).scalar_one_or_none()
     if existing_user:
         raise registration_exception
 
@@ -41,15 +41,14 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login", response_model=MeResponse)
 @db_transaction
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
-    user = db.execute(select(User).where(User.name == user_data.name)).scalar_one_or_none()
+    user = db.execute(select(User).where(User.login == user_data.login)).scalar_one_or_none()
 
     if not user or not pwd_context.verify(user_data.password, user.password):
         raise auth_exception
 
-    logger.info(f"Пользователь {user_data.username} авторизовался в приложении")
+    logger.info(f"Пользователь {user.name} авторизовался в приложении")
 
     new_token = create_jwt_token(user.id)
-    user = get_user_by_token(new_token, db)
 
     return {
         "user": user,

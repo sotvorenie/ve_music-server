@@ -25,7 +25,7 @@ def create_jwt_token(user_id):
 
 # получаем пользователя по jwt-токену
 def get_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    get_user_by_token(token, db)
+    return get_user_by_token(token, db)
 
 
 # получаем пользователя по токену
