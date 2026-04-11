@@ -134,14 +134,16 @@ def get_offset(page: int = 1, limit: int = 21) -> int:
 def get_total_and_music_from_db(model, user_id, page, limit, db: Session):
     skip = get_offset(page, limit)
 
-    music = db.scalars(select(model)
-                       .where(model.user_id == user_id)
-                       .options(
-                            joinedload(model.music).joinedload(Music.artists),
-                            joinedload(model.music).joinedload(Music.genre))
-                       .order_by(model.date.desc())
-                       .offset(skip)
-                       .limit(limit)).all()
+    results = db.scalars(select(model)
+                         .where(model.user_id == user_id)
+                         .options(
+        joinedload(model.music).joinedload(Music.artists),
+        joinedload(model.music).joinedload(Music.genre))
+                         .order_by(model.date.desc())
+                         .offset(skip)
+                         .limit(limit)).unique().all()
+
+    music = [item.music for item in results]
     total = db.scalar(select(func.count(model.id)).where(model.user_id == user_id))
 
     return {

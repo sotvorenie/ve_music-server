@@ -54,4 +54,4 @@ def get_list_likes(page: int = 1,
                    limit: int = 21,
                    current_user: User = Depends(get_user),
                    db: Session = Depends(get_db)):
-    return get_total_and_music_from_db(Like, current_user, page, limit, db)
+    return get_total_and_music_from_db(Like, current_user.id, page, limit, db)
