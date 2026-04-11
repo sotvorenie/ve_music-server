@@ -3,6 +3,7 @@ from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -25,11 +26,6 @@ def create_jwt_token(user_id):
 
 # получаем пользователя по jwt-токену
 def get_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    return get_user_by_token(token, db)
-
-
-# получаем пользователя по токену
-def get_user_by_token(token: str, db: Session):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         user_id: str = payload.get("sub")
@@ -39,7 +35,9 @@ def get_user_by_token(token: str, db: Session):
         raise jwt_exception
 
     try:
-        user = db.query(User).filter_by(id=int(user_id)).first()
+        user = db.execute(
+            select(User).where(User.id == int(user_id))
+        ).scalar_one_or_none()
         if user is None:
             raise jwt_exception
         return user

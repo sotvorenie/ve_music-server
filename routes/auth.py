@@ -6,7 +6,7 @@ from models import UserRegister, UserLogin, MeResponse
 from utils import db_transaction
 from database import get_db
 from database_models import User
-from auth import pwd_context, create_jwt_token, get_user, get_user_by_token
+from auth import pwd_context, create_jwt_token, get_user
 from httpExceptions import registration_exception, auth_exception
 
 from logger import get_logger
