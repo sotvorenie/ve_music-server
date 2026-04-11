@@ -11,6 +11,7 @@ from database import get_db
 from httpExceptions import music_exception
 
 from logger import get_logger
+
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/history", tags=["History"])
@@ -24,7 +25,13 @@ def set_to_history(music_id: int, current_user: User = Depends(get_user), db: Se
         logger.warning(f"Музыки с id={music_id} нет в БД..")
         raise music_exception
 
-    history_entry = db.execute(select(History).where(History.user_id == current_user.id)).scalar_one_or_none()
+    history_entry = db.execute(
+        select(History)
+        .where(
+            History.user_id == current_user.id,
+            History.music_id == music.id,
+        )).scalar_one_or_none()
+
     if history_entry:
         history_entry.date = datetime.now(timezone.utc)
     else:
@@ -33,13 +40,14 @@ def set_to_history(music_id: int, current_user: User = Depends(get_user), db: Se
 
     total = db.scalar(select(func.count()).select_from(History).where(History.user_id == current_user.id))
     if total > 100:
-        last_history_music_id = (select(History.id)
-                                 .where(History.user_id == current_user.id)
-                                 .order_by(History.date.asc())
-                                 .limit(1)
-                                 .scalar_subquery()
-                                 )
-        db.execute(delete(History).where(History.id == last_history_music_id))
+        last_history_music_id = db.scalar(
+            select(History.id)
+            .where(History.user_id == current_user.id)
+            .order_by(History.date.asc())
+            .limit(1)
+        )
+        if last_history_music_id:
+            db.execute(delete(History).where(History.id == last_history_music_id))
 
     return {"success": True}
 
