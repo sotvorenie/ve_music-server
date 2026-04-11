@@ -24,12 +24,12 @@ def create_jwt_token(user_id):
 
 
 # получаем пользователя по jwt-токену
-def get_user(token: str = Depends(oauth2_scheme)):
-    get_user_by_token(token)
+def get_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    get_user_by_token(token, db)
 
 
 # получаем пользователя по токену
-def get_user_by_token(token: str, db: Session = Depends(get_db)):
+def get_user_by_token(token: str, db: Session):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         user_id: str = payload.get("sub")
