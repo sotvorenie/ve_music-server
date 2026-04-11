@@ -100,3 +100,7 @@ class SuccessResponse(ORMModel):
 
 class LikeResponse(ORMModel):
     is_liked: bool
+
+
+class AvatarResponse(ORMModel):
+    new_avatar_url: str

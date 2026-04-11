@@ -49,6 +49,14 @@ def get_file_url(path: Path):
     return f"static/{path.relative_to(MUSIC_DIRECTORY).as_posix()}"
 
 
+# получаем путь файла
+def get_file_path(url: str):
+    if not url:
+        return None
+    relative_path = Path(url.replace("static/", "", 1))
+    return MUSIC_DIRECTORY / relative_path
+
+
 # получаем длительность музыки
 def get_music_duration(music_file: Path) -> int:
     if not music_file.exists():
