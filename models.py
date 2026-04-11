@@ -99,9 +99,4 @@ class SuccessResponse(ORMModel):
 
 
 class LikeResponse(ORMModel):
-    success: bool
-    liked: bool
-
-
-class IsLikedResponse(ORMModel):
     is_liked: bool

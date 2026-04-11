@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import (select, update, delete,
                         and_, exists)
 
-from models import LikeResponse, IsLikedResponse, MusicListResponse
+from models import LikeResponse, MusicListResponse
 from database_models import Music, Like, User
 from database import get_db
 from utils import db_transaction, get_total_and_music_from_db
@@ -24,24 +24,23 @@ def like_music(music_id: int, current_user: User = Depends(get_user), db: Sessio
         logger.warning(f"Музыки с id={music_id} нет в БД..")
         raise music_exception
 
-    result = db.execute(delete(Like).where(and_(Like.user_id == current_user.id, Like.music.id == music_id)))
+    result = db.execute(delete(Like).where(and_(Like.user_id == current_user.id, Like.music_id == music_id)))
 
     if result.rowcount == 0:
         new_like = (Like(user_id=current_user.id, music_id=music_id))
         db.add(new_like)
-        db.execute(update(Music).where(Music.id == music_id).values(auditions=Music.auditions + 1))
+        db.execute(update(Music).where(Music.id == music_id).values(likes=Music.likes + 1))
         is_liked = True
     else:
-        db.execute(update(Music).where(Music.id == music_id).values(auditions=Music.auditions - 1))
+        db.execute(update(Music).where(Music.id == music_id).values(likes=Music.likes - 1))
         is_liked = False
 
     return {
-        "success": True,
         "is_liked": is_liked,
     }
 
 
-@router.get("/is_liked/{music_id:int}", response_model=IsLikedResponse)
+@router.get("/is_liked/{music_id:int}", response_model=LikeResponse)
 @db_transaction
 def is_like(music_id: int, current_user: User = Depends(get_user), db: Session = Depends(get_db)):
     is_liked = db.scalar(select(exists().where(and_(Like.music_id == music_id, Like.user_id == current_user.id))))
