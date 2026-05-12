@@ -4,7 +4,7 @@ from sqlalchemy import func, select, update
 from pathlib import Path
 
 from models import MusicListResponse, MusicResponse
-from database_models import Music
+from database_models import Music, Artist
 from database import get_db
 from utils import get_offset, get_audio_file, db_transaction
 from httpExceptions import music_exception
@@ -15,32 +15,45 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/music", tags=["Music"])
 
 
-@router.get("/all", response_model=MusicListResponse)
-@db_transaction
-def get_all_music(page: int = 1, limit: int = 21, db: Session = Depends(get_db)):
+@router.get("/list", response_model=MusicListResponse)
+def get_music_list(
+        name: str,
+        genre_id: int,
+        artist_id: int,
+        page: int = 1,
+        limit: int = 21,
+        db: Session = Depends(get_db)
+):
     skip = get_offset(page, limit)
 
-    music = db.scalars(select(Music)
-                       .options(selectinload(Music.artists))
-                       .order_by(Music.name.asc())
-                       .offset(skip)
-                       .limit(limit)
-                       ).all()
+    query = select(Music)
 
-    total = db.execute(select(func.count()).select_from(Music)).scalar_one()
+    if name:
+        query = query.where(Music.name.ilike(f"%{name}%"))
+    if genre_id >=0:
+        query = query.where(Music.genre_id == genre_id)
+    if artist_id >= 0:
+        query = query.where(Music.artists.any(Artist.id == artist_id))
+
+    total = db.scalar(select(func.count()).select_from(query.subquery()))
+
+    if artist_id >= 0:
+        query = query.options(selectinload(Music.artists))
+
+    music = db.scalars(query.order_by(Music.name.asc()).offset(skip).limit(limit)).all()
 
     return {
         "music": music,
         "total": total,
         "page": page,
         "limit": limit,
-        "has_more": (skip + limit) < total,
+        "has_more": (skip + limit) < total
     }
 
 
 @router.get("/{music_id:int}", response_model=MusicResponse)
 @db_transaction
-def get_music(music_id: int, db: Session = Depends(get_db)):
+def get_music(music_id: int, set_view: bool = True, db: Session = Depends(get_db)):
     music = db.execute(select(Music)
                        .where(Music.id == music_id)
                        .options(selectinload(Music.artists))
@@ -62,38 +75,10 @@ def get_music(music_id: int, db: Session = Depends(get_db)):
         logger.warning(f"У музыки {music.name} нет аудио-файла..")
         raise music_exception
 
-    db.execute(update(Music).where(Music.id == music_id).values(auditions=Music.auditions + 1))
+    values_to_update = {}
+    if set_view:
+        values_to_update[Music.auditions] = Music.auditions + 1
+
+    db.execute(update(Music).where(Music.id == music_id).values(values_to_update))
 
     return music
-
-
-@router.get("/search", response_model=MusicListResponse)
-@db_transaction
-def get_music_by_name(name: str, page: int = 1, limit: int = 21, db: Session = Depends(get_db)):
-    skip = get_offset(page, limit)
-
-    query = select(Music)
-
-    if name:
-        query = query.where(Music.name.ilike(f"%{name}%"))
-
-    music = db.scalars(query
-                       .options(selectinload(Music.artists))
-                       .order_by(Music.name.asc())
-                       .offset(skip)
-                       .limit(limit)
-                       ).all()
-
-    total_query = select(func.count()).select_from(Music)
-    if name:
-        total_query = total_query.where(Music.name.ilike(f"%{name}%"))
-
-    total = db.scalar(total_query)
-
-    return {
-        "music": music,
-        "total": total,
-        "page": page,
-        "limit": limit,
-        "has_more": (skip + limit) < total,
-    }
